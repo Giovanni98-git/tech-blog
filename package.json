@@ -11,6 +11,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "better-auth": "^1.6.20",
     "dotenv": "^17.4.2",
     "jodit": "^4.11.13",
     "jodit-react": "^5.3.21",
