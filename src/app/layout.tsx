@@ -5,6 +5,7 @@ import Navbar from "@/components/general/navbar/Navbar";
 import Footer from "@/components/general/Footer";
 import SignInModal from "@/components/modals/SignInModal";
 import SearchModal from "@/components/modals/SearchModal";
+import { Toaster } from "react-hot-toast";
 
 const poppins = Geist({
   subsets: ["latin"],
@@ -30,6 +31,7 @@ export default function RootLayout({
         <Footer />
         <SignInModal />
         <SearchModal />
+        <Toaster />
       </body>
     </html>
   );

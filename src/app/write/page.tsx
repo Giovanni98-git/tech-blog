@@ -1,6 +1,8 @@
 "use client";
 import dynamic from "next/dynamic";
+import axios from "axios";
 import { useMemo, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 const JoditEditor = dynamic(() => import("jodit-react"), {
   ssr: false,
 });
@@ -8,6 +10,10 @@ const JoditEditor = dynamic(() => import("jodit-react"), {
 export default function WritePage() {
   const editor = useRef(null);
   const [content, setContent] = useState("");
+  const [title, setTitle] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const config = useMemo(
     () => ({
@@ -20,20 +26,78 @@ export default function WritePage() {
     }),
     [],
   );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      if (!title || !content || !excerpt || !coverImage) {
+        toast("All fields are required", {
+          style: {
+            color: "white",
+            background: "#1e3a8a",
+          },
+        });
+        return;
+      }
+      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content);
+      formData.append("excerpt", excerpt);
+      formData.append("coverImage", coverImage);
+
+      await axios.post("/api/posts", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setContent("");
+      setTitle("");
+      setExcerpt("");
+      setCoverImage(null);
+      toast("Article published successfully", {
+        style: {
+          color: "white",
+          background: "#1e3a8a",
+        },
+      });
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // toast to the user about the error
+        toast(error.response?.data, {
+          style: {
+            color: "white",
+            background: "#1e3a8a",
+          },
+        });
+      } else {
+        console.error("Unexpected error:", error);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <section className="max-w-3xl mx-auto py-20 px-6">
       {/* page title */}
       <h1 className="text-3xl font-bold text-white mb-10">
         Write a new article
       </h1>
-      <form action="">
+      <form onSubmit={handleSubmit}>
+        {/* title */}
         <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           type="text"
           placeholder="Article title"
           className="w-full bg-transparent text-4xl font-bold text-white placeholder-gray-500 outline-none mb-6"
         />
         {/* excerpt */}
         <textarea
+          value={excerpt}
+          onChange={(e) => setExcerpt(e.target.value)}
           placeholder="Write a short excerpt (1-2 sentences)"
           rows={3}
           className="w-full bg-secondary-background text-gray-200 placeholder-gray-500 rounded-xl 
@@ -43,8 +107,10 @@ export default function WritePage() {
         <div className="mb-10">
           <label className="block text-gray-400 mb-2">Cover Image</label>
           <input
+            onChange={(e) =>
+              setCoverImage(e.target.files ? e.target.files[0] : null)
+            }
             type="file"
-            name=""
             accept="image/*"
             className="block w-full text-sm
           text-gray-400 file:mr-4 file:py-2 file:px-4 
@@ -67,7 +133,7 @@ export default function WritePage() {
             className="px-6 py-3 rounded-full bg-primary cursor-pointer 
           text-white font-semibold transition-colors"
           >
-            Publish
+            {isSubmitting ? "Publishing..." : "Publish"}
           </button>
         </div>
       </form>
