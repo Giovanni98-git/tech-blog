@@ -1,7 +1,9 @@
 import RecentPost from "@/components/home/RecentPost";
+import PostCardSkeleton from "@/components/skeletons/PostCardSkeleton";
 import ContainerLayout from "@/layouts/ContainerLayout";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { LuArrowRight } from "react-icons/lu";
 
 export default function Home() {
@@ -50,7 +52,9 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <RecentPost />
+      <Suspense fallback={<PostCardSkeleton />}>
+        <RecentPost />
+      </Suspense>
     </ContainerLayout>
   );
 }

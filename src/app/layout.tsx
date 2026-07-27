@@ -6,6 +6,7 @@ import Footer from "@/components/general/Footer";
 import SignInModal from "@/components/modals/SignInModal";
 import SearchModal from "@/components/modals/SearchModal";
 import { Toaster } from "react-hot-toast";
+import QueryProvider from "@/providers/QueryProvider";
 
 const poppins = Geist({
   subsets: ["latin"],
@@ -26,12 +27,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} antialiased bg-background`}>
-        <Navbar />
-        {children}
-        <Footer />
-        <SignInModal />
-        <SearchModal />
-        <Toaster />
+        <QueryProvider>
+          <Navbar />
+          {children}
+          <Footer />
+          <SignInModal />
+          <SearchModal />
+          <Toaster />
+        </QueryProvider>
       </body>
     </html>
   );
