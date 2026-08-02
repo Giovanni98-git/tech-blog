@@ -143,3 +143,56 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ postId: string }> },
+) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { postId } = await params;
+
+    if (!postId) {
+      return NextResponse.json(
+        { error: "Valid post ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    if (post.authorId !== session.user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (post.coverImagePublicId) {
+      await deleteFromCloudinary(post.coverImagePublicId);
+    }
+    await prisma.post.delete({
+      where: { id: postId },
+    });
+
+    return NextResponse.json(
+      { message: "Post deleted successfully" },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("DELETE POST ERROR:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch post" },
+      { status: 500 },
+    );
+  }
+}

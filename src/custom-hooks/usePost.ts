@@ -1,6 +1,11 @@
-import { fetchPosts } from "@/services/posts";
+import { deletePost, fetchPosts } from "@/services/posts";
 import { FetchPostsResponse } from "@/types/post";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 export function useInfinitePosts({ limit }: { limit: number }) {
   return useInfiniteQuery<FetchPostsResponse, Error>({
@@ -9,5 +14,21 @@ export function useInfinitePosts({ limit }: { limit: number }) {
       fetchPosts({ pageParam: pageParam as string | null, limit }),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+  });
+}
+
+export function useDeletePost() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  return useMutation({
+    mutationFn: (postId: string) => deletePost(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      router.replace("/articles");
+    },
+    onError: (error) => {
+      console.error("DELETE_POST_ERROR:", error);
+      alert("Failed to delete post");
+    },
   });
 }
