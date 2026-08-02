@@ -1,8 +1,11 @@
 "use client";
 import dynamic from "next/dynamic";
 import axios from "axios";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import Image from "next/image";
+import EditPageSkeleton from "@/components/skeletons/EditPageSkeleton";
 const JoditEditor = dynamic(() => import("jodit-react"), {
   ssr: false,
 });
@@ -14,6 +17,10 @@ export default function EditPage() {
   const [excerpt, setExcerpt] = useState("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { postId } = useParams();
+  const router = useRouter();
 
   const config = useMemo(
     () => ({
@@ -32,8 +39,8 @@ export default function EditPage() {
     setIsSubmitting(true);
 
     try {
-      if (!title || !content || !excerpt || !coverImage) {
-        toast("All fields are required", {
+      if (!title || !content || !excerpt) {
+        toast("Title, Excerpt and Content are required", {
           style: {
             color: "white",
             background: "#1e3a8a",
@@ -46,23 +53,26 @@ export default function EditPage() {
       formData.append("title", title);
       formData.append("content", content);
       formData.append("excerpt", excerpt);
-      formData.append("coverImage", coverImage);
+      if (coverImage) {
+        formData.append("coverImage", coverImage);
+      }
 
-      await axios.post("/api/posts", formData, {
+      const response = await axios.patch(`/api/posts/${postId}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      setContent("");
-      setTitle("");
-      setExcerpt("");
-      setCoverImage(null);
-      toast("Article published successfully", {
+
+      toast("Article updated successfully", {
         style: {
           color: "white",
           background: "#1e3a8a",
         },
       });
+
+      const slug = response.data.slug;
+
+      router.replace(`/articles/${slug}`);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         // toast to the user about the error
@@ -79,6 +89,36 @@ export default function EditPage() {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        const { data } = await axios.get(`/api/posts/${postId}`);
+        setTitle(data.title);
+        setExcerpt(data.excerpt);
+        setContent(data.content);
+        setPreviewImage(data.coverImageUrl);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error("AXIOS_ERROR:", error.response?.data);
+          alert(error.response?.data.error || "Failed to load post");
+        } else {
+          console.error("UNKNOWN_ERROR:", error);
+          alert("An unexpected error occurred while loading the post");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (postId) {
+      fetchPost();
+    }
+  }, [postId]);
+
+  if (loading) {
+    return <EditPageSkeleton />;
+  }
   return (
     <section className="max-w-3xl mx-auto py-20 px-6">
       {/* page title */}
@@ -116,6 +156,17 @@ export default function EditPage() {
           file:text-white hover:file:bg-indigo-500"
           />
         </div>
+
+        {/* image-preview */}
+        <div className="my-8">
+          <Image
+            src={previewImage as string}
+            alt="mage-preview"
+            width={300}
+            height={300}
+            className="object-cover"
+          />
+        </div>
         {/* editor */}
         <div className="rounded-2xl overflow-hidden border border-white/10">
           <JoditEditor
@@ -131,7 +182,7 @@ export default function EditPage() {
             className="px-6 py-3 rounded-full bg-primary cursor-pointer 
           text-white font-semibold transition-colors"
           >
-            {isSubmitting ? "Publishing..." : "Publish"}
+            {isSubmitting ? "Updating..." : "Update"}
           </button>
         </div>
       </form>
