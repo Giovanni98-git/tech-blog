@@ -2,7 +2,7 @@ import { Post } from "@/types/post";
 import Image from "next/image";
 import Link from "next/link";
 
-const baseUrl = "https://tech-blog-2248ewr65-robot-6d160e05.vercel.app";
+const baseUrl = "https://tech-blog-2248ewr65-robot-6d160e05.vercel.app/";
 
 export default async function RecentPost() {
   const res = await fetch(`${baseUrl}/api/posts/recent`, {
