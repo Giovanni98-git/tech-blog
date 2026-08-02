@@ -10,7 +10,7 @@ export default function ArticlesPage() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
     useInfinitePosts({ limit: 1 });
 
-  if (true) {
+  if (status === "pending") {
     return (
       <ContainerLayout>
         <h2 className="text-xl sm-text-2xl md:text-3xl text-white font-semibold">
