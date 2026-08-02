@@ -108,7 +108,7 @@ export async function GET(req: Request) {
 
     // determine the pagination state
 
-    let hasMore = posts.length > limit;
+    const hasMore = posts.length > limit;
     const items = hasMore ? posts.slice(0, -1) : posts;
 
     const nextCursor = hasMore ? items[items.length - 1].id : null;

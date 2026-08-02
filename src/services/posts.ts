@@ -19,3 +19,17 @@ export async function deletePost(postId: string) {
 
   return res.data;
 }
+
+export async function searchPosts(query: string) {
+  console.log(query);
+
+  if (!query) return [];
+
+  const res = await axios.get("api/posts/search", {
+    params: {
+      q: query,
+    },
+  });
+
+  return res.data.posts;
+}

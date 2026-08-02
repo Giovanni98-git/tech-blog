@@ -108,6 +108,7 @@ export async function PATCH(
         uniqueSlug = `${baseSlug}-${counter}`;
         counter++;
       }
+      slug = uniqueSlug;
     }
 
     let imageData: cloudinaryUploadResult | null = null;

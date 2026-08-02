@@ -1,31 +1,43 @@
 "use client";
 import { useModalStore } from "@/store/useModalStore";
 import Modal from "./Modal";
-
-const results = [
-  {
-    id: 1,
-    title: "Building a Medium-Style Blog with Next.js",
-    slug: "/articls/medium-style-blog",
-  },
-  {
-    id: 2,
-    title: "Understanding React Hooks",
-    slug: "/articles/understanding-react-hooks",
-  },
-  {
-    id: 3,
-    title: "A Guide to Next.js Routing",
-    slug: "/articles/a-guide-to-nextjs-routing",
-  },
-];
+import { useState } from "react";
+import { useDebounce } from "@/custom-hooks/usePost";
+import { useQuery } from "@tanstack/react-query";
+import { searchPosts } from "@/services/posts";
+import { Post } from "@/types/post";
+import { useRouter } from "next/navigation";
 
 export default function SearchModal() {
   const { isSearchOpen, closeSearch } = useModalStore();
+
+  const [query, setQuery] = useState("");
+
+  const debouncedQuery = useDebounce(query, 400);
+
+  const router = useRouter();
+
+  const {
+    data: results = [],
+    isLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: ["search-posts", debouncedQuery],
+    queryFn: () => searchPosts(debouncedQuery),
+    enabled: debouncedQuery.length > 1, // prevent useless requests
+  });
+
+  const handleNavigate = (slug: string) => {
+    router.push(`/articles/${slug}`);
+    closeSearch();
+    setQuery("");
+  };
   return (
     <Modal isOpen={isSearchOpen} onClose={closeSearch}>
       <div className="space-y-4">
         <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           type="text"
           placeholder="Search articles"
           autoFocus
@@ -36,8 +48,19 @@ export default function SearchModal() {
           className="max-h-80 overflow-y-auto rounded-xl border border-white/10
       divide-y divide-white/10"
         >
-          {results.map((result) => (
+          {/* if s searching  */}
+          {(isLoading || isFetching) && (
+            <div className="px-4 py-3 text-gray-400 text-sm">Searching...</div>
+          )}
+          {/* empty */}
+          {!isLoading && debouncedQuery && results.length === 0 && (
+            <div className="px-4 py-3 text-gray-400 text-sm">
+              No results found!
+            </div>
+          )}
+          {results.map((result: Post) => (
             <button
+              onClick={() => handleNavigate(result.slug)}
               key={result.id}
               className="w-full text-left px-4 py-3 text-gray-300 trannsition 
             hover:bg-white/5 hover:text-white cursor-pointer"
